@@ -6,10 +6,14 @@
     <string name="enter_password">Enter a password to connect</string>
     <string name="success">You\'ve logged in successfully</string>
     <string name="fail">Login failed</string>
+    <string name="incorrect_password">Incorrect Password</string>
+    <string name="correct_password">Correct Password</string>
     <string name="bluetooth">Bluetooth</string>
     <string name="flash">Flash</string>
     <string name="charger">Charger</string>
     <string name="airplane">Airplane</string>
-    <string name="do_not_disturbe">Do Not Disturb</string>
+    <string name="do_not_disturb">Do Not Disturb</string>
     <string name="sensors">Sensors</string>
+    <string name="phone1">0528984435</string>
+    <string name="phone2">+972528984435</string>
 </resources>

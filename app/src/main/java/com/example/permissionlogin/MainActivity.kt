@@ -1,8 +1,18 @@
 package com.example.permissionlogin
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.graphics.Camera
+import android.os.BatteryManager
 import android.os.Bundle
+import android.provider.Settings
+import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,11 +35,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.permissionlogin.ui.theme.PermissionLoginTheme
+
 
 class MainActivity : ComponentActivity() {
 
     private val permissionViewModel: PermissionViewModel by viewModels()
+
+    private val requestPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            // Do something if permission granted
+            if (isGranted) {
+                Log.i("DEBUG", "permission granted")
+            } else {
+                Log.i("DEBUG", "permission denied")
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +59,7 @@ class MainActivity : ComponentActivity() {
             PermissionLoginTheme(darkTheme = true) {
                 // A surface container using the 'background' color from the theme
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
-                    LoginView(permissionViewModel)
+                    LoginView(permissionViewModel, requestPermission)
                 }
             }
         }
@@ -45,7 +67,47 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun LoginView(permissionViewModel: PermissionViewModel) {
+fun askPermission() {
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permission Accepted: Do something
+            Log.d("ExampleScreen", "PERMISSION GRANTED")
+
+        } else {
+            // Permission Denied: Do something
+            Log.d("ExampleScreen", "PERMISSION DENIED")
+        }
+    }
+    val context = LocalContext.current
+
+    Button(
+        onClick = {
+            // Check permission
+            when (PackageManager.PERMISSION_GRANTED) {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.CAMERA
+                ) -> {
+                    // Some works that require permission
+                    Log.d("ExampleScreen", "Code requires permission")
+                }
+                else -> {
+                    // Asking for permission
+                    launcher.launch(Manifest.permission.CAMERA)
+                }
+            }
+        }
+    ) {
+        Text(text = "Check and Request Permission")
+    }
+
+}
+
+
+@Composable
+fun LoginView(permissionViewModel: PermissionViewModel, requestPermission: ActivityResultLauncher<String>) {
     val context = LocalContext.current
 
     Column(modifier = Modifier.padding(20.dp)) {
@@ -107,6 +169,13 @@ fun LoginView(permissionViewModel: PermissionViewModel) {
         ExtendedFloatingActionButton(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             onClick = {
+                permissionViewModel.handleEvent(PermissionEvent.CheckIfHasMsg(context))
+                permissionViewModel.handleEvent(PermissionEvent.CheckIfPhoneLyingDown(context))
+                permissionViewModel.handleEvent(PermissionEvent.CheckIfBluetoothOn(context))
+                permissionViewModel.handleEvent(PermissionEvent.CheckIfDndOn(context))
+                permissionViewModel.handleEvent(PermissionEvent.CheckIfFlashOn(context))
+                permissionViewModel.handleEvent(PermissionEvent.CheckIfAirplaneModeOn(context))
+                permissionViewModel.handleEvent(PermissionEvent.CheckIfBatteryIsCharging(context))
                 permissionViewModel.handleEvent(PermissionEvent.LoginClicked(permissionViewModel.passwordTyped))
             },
             text = {
@@ -124,123 +193,136 @@ fun LoginView(permissionViewModel: PermissionViewModel) {
             shape = MaterialTheme.shapes.small
         )
 
-        Spacer(modifier = Modifier.padding(20.dp))
+        //todo permission
+        requestPermission.launch(Manifest.permission.CAMERA)
+        requestPermission.launch(Manifest.permission.BLUETOOTH_ADMIN)
+
+        //todo dialogs for errors
+
+//        Spacer(modifier = Modifier.padding(20.dp))
+//
+//        Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+//            ExtendedFloatingActionButton(
+//                modifier = Modifier.padding(10.dp),
+//                onClick = { /* ... */ },
+//                text = {
+//                    Text(
+//                        text = stringResource(id = R.string.bluetooth),
+//                        style = TextStyle(
+//                            fontSize = 12.sp,
+//                            textAlign = TextAlign.Center,
+//                        )
+//                    )
+//                },
+//                icon = {
+//                    Icon(painter = painterResource(id = R.drawable.ic_bluetooth), contentDescription = null)
+//                },
+//            )
+//
+//            ExtendedFloatingActionButton(
+//                modifier = Modifier.padding(10.dp),
+//                onClick = { /* ... */ },
+//                text = {
+//                    Text(
+//                        text = stringResource(id = R.string.flash),
+//                        style = TextStyle(
+//                            fontSize = 12.sp,
+//                            textAlign = TextAlign.Center,
+//                        )
+//                    )
+//                },
+//                icon = {
+//                    Icon(painter = painterResource(id = R.drawable.ic_flashlight_on), contentDescription = null)
+//                },
+//            )
+//
+//        }
+//
+//        Spacer(modifier = Modifier.padding(20.dp))
+//
+//        Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+//            ExtendedFloatingActionButton(
+//                modifier = Modifier.padding(10.dp),
+//                onClick = { /* ... */ },
+//                text = {
+//                    Text(
+//                        text = stringResource(id = R.string.sensors),
+//                        style = TextStyle(
+//                            fontSize = 12.sp,
+//                            textAlign = TextAlign.Center,
+//                        )
+//                    )
+//                },
+//                icon = {
+//                    Icon(painter = painterResource(id = R.drawable.ic_sensors), contentDescription = null)
+//                },
+//            )
+//
+//            ExtendedFloatingActionButton(
+//                modifier = Modifier.padding(10.dp),
+//                onClick = { /* ... */ },
+//                text = {
+//                    Text(
+//                        text = stringResource(id = R.string.do_not_disturb),
+//                        style = TextStyle(
+//                            fontSize = 12.sp,
+//                            textAlign = TextAlign.Center,
+//                        )
+//                    )
+//                },
+//                icon = {
+//                    Icon(painter = painterResource(id = R.drawable.ic_do_not_disturb_on), contentDescription = null)
+//                },
+//            )
+//
+//        }
+//
+//        Spacer(modifier = Modifier.padding(20.dp))
 
 
-        Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            ExtendedFloatingActionButton(
-                modifier = Modifier.padding(10.dp),
-                onClick = { /* ... */ },
-                text = {
-                    Text(
-                        text = stringResource(id = R.string.bluetooth),
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center,
-                        )
-                    )
-                },
-                icon = {
-                    Icon(painter = painterResource(id = R.drawable.ic_bluetooth), contentDescription = null)
-                },
-            )
 
-            ExtendedFloatingActionButton(
-                modifier = Modifier.padding(10.dp),
-                onClick = { /* ... */ },
-                text = {
-                    Text(
-                        text = stringResource(id = R.string.flash),
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center,
-                        )
-                    )
-                },
-                icon = {
-                    Icon(painter = painterResource(id = R.drawable.ic_flashlight_on), contentDescription = null)
-                },
-            )
+//        Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+//            ExtendedFloatingActionButton(
+//                modifier = Modifier.padding(10.dp),
+//                onClick = { /* ... */ },
+//                text = {
+//                    Text(
+//                        text = stringResource(id = R.string.airplane),
+//                        style = TextStyle(
+//                            fontSize = 12.sp,
+//                            textAlign = TextAlign.Center,
+//                        )
+//                    )
+//                },
+//                icon = {
+//                    Icon(painter = painterResource(id = R.drawable.ic_airplanemode_active), contentDescription = null)
+//                },
+//            )
+//
+//
+//
+//            ExtendedFloatingActionButton(
+//                modifier = Modifier.padding(10.dp),
+//                onClick = {
+//                        var isCharging = checkIfBatteryIsCharging(context)
+//                },
+//                text = {
+//                    Text(
+//                        text = stringResource(id = R.string.charger),
+//                        style = TextStyle(
+//                            fontSize = 12.sp,
+//                            textAlign = TextAlign.Center,
+//                        )
+//                    )
+//                },
+//                icon = {
+//                    Icon(painter = painterResource(id = R.drawable.ic_charging_station), contentDescription = null)
+//                },
+//            )
+//
+//
+//        }
 
-        }
-
-        Spacer(modifier = Modifier.padding(20.dp))
-
-        Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            ExtendedFloatingActionButton(
-                modifier = Modifier.padding(10.dp),
-                onClick = { /* ... */ },
-                text = {
-                    Text(
-                        text = stringResource(id = R.string.sensors),
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center,
-                        )
-                    )
-                },
-                icon = {
-                    Icon(painter = painterResource(id = R.drawable.ic_sensors), contentDescription = null)
-                },
-            )
-
-            ExtendedFloatingActionButton(
-                modifier = Modifier.padding(10.dp),
-                onClick = { /* ... */ },
-                text = {
-                    Text(
-                        text = stringResource(id = R.string.do_not_disturbe),
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center,
-                        )
-                    )
-                },
-                icon = {
-                    Icon(painter = painterResource(id = R.drawable.ic_do_not_disturb_on), contentDescription = null)
-                },
-            )
-
-        }
-
-        Spacer(modifier = Modifier.padding(20.dp))
-
-        Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            ExtendedFloatingActionButton(
-                modifier = Modifier.padding(10.dp),
-                onClick = { /* ... */ },
-                text = {
-                    Text(
-                        text = stringResource(id = R.string.airplane),
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center,
-                        )
-                    )
-                },
-                icon = {
-                    Icon(painter = painterResource(id = R.drawable.ic_airplanemode_active), contentDescription = null)
-                },
-            )
-
-            ExtendedFloatingActionButton(
-                modifier = Modifier.padding(10.dp),
-                onClick = { /* ... */ },
-                text = {
-                    Text(
-                        text = stringResource(id = R.string.charger),
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center,
-                        )
-                    )
-                },
-                icon = {
-                    Icon(painter = painterResource(id = R.drawable.ic_charging_station), contentDescription = null)
-                },
-            )
-
-        }
     }
 }
 
