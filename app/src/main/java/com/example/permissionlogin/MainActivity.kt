@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
 
     private val permissionViewModel: PermissionViewModel by viewModels()
 
-    private val neededPermissions = arrayOf(
+    private val neededPermissions = listOf(
         Manifest.permission.READ_SMS,
         Manifest.permission.READ_PHONE_NUMBERS,
         Manifest.permission.READ_CALL_LOG,
@@ -48,12 +48,7 @@ class MainActivity : ComponentActivity() {
             PermissionLoginTheme(darkTheme = true) {
 
                 val permissionsState = rememberMultiplePermissionsState(
-                    permissions = listOf(
-                        Manifest.permission.READ_SMS,
-                        Manifest.permission.READ_PHONE_NUMBERS,
-                        Manifest.permission.READ_CALL_LOG,
-                        Manifest.permission.READ_CONTACTS
-                    )
+                    permissions = neededPermissions
                 )
 
                 val lifecycleOwner = LocalLifecycleOwner.current
@@ -73,63 +68,65 @@ class MainActivity : ComponentActivity() {
                     }
                 )
 
-                // A surface container using the 'background' color from the theme
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
+                //PermissionView(permissionsState, )
 
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        permissionsState.permissions.forEach { perm ->
-                            when (perm.permission) {
-                                Manifest.permission.READ_SMS,
-                                Manifest.permission.READ_PHONE_NUMBERS,
-                                Manifest.permission.READ_CALL_LOG,
-                                Manifest.permission.READ_CONTACTS -> {
-                                    when {
-                                        perm.status.isGranted -> {
-                                            LoginScreen(permissionViewModel = permissionViewModel)
-                                        }
-                                        perm.status.shouldShowRationale -> {
-                                            AlertDialog(
-                                                onDismissRequest = {},
-                                                title = {
-                                                    Text(
-                                                        text = "Permission Request",
-                                                        style = TextStyle(
-                                                            fontSize = MaterialTheme.typography.h6.fontSize,
-                                                            fontWeight = FontWeight.Bold
-                                                        )
-                                                    )
-                                                },
-                                                text = {
-                                                    Text(
-                                                        text = perm.toString() + " permission is needed" +
-                                                                "to access the camera"
-                                                    )
-                                                },
-                                                confirmButton = {
-                                                    Button(onClick = { perm.launchPermissionRequest() }) {
-                                                        Text("Give Permission")
-                                                    }
-                                                }
-                                            )
-                                        }
-                                        perm.isPermanentlyDenied() -> {
-                                            PermissionDeniedButton(LocalContext.current, perm)
-                                        }
+
+                }
+            }
+        }
+
+
+}
+@Composable
+private fun PermissionView() {
+    // A surface container using the 'background' color from the theme
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            if (permissionsState.allPermissionsGranted) {
+                LoginScreen(permissionViewModel = permissionViewModel)
+            } else {
+                permissionsState.permissions.forEach { perm ->
+                    when {
+                        perm.status.shouldShowRationale -> {
+                            AlertDialog(
+                                onDismissRequest = {},
+                                title = {
+                                    Text(
+                                        text = "Permission Request",
+                                        style = TextStyle(
+                                            fontSize = MaterialTheme.typography.h6.fontSize,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    )
+                                },
+                                text = {
+                                    Text(
+                                        text = perm.toString() + " permission is needed" +
+                                                "to access the camera"
+                                    )
+                                },
+                                confirmButton = {
+                                    Button(onClick = { perm.launchPermissionRequest() }) {
+                                        Text("Give Permission")
                                     }
                                 }
-                            }
+                            )
+                        }
+                        perm.isPermanentlyDenied() -> {
+                            PermissionDeniedButton(LocalContext.current, perm)
                         }
                     }
                 }
+
             }
         }
     }
 }
-
 
 @ExperimentalPermissionsApi
 fun PermissionState.isPermanentlyDenied(): Boolean {
