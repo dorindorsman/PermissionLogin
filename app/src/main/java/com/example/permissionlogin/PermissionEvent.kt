@@ -12,5 +12,7 @@ sealed class PermissionEvent {
     class CheckIfBluetoothOn(val context: Context) : PermissionEvent()
     class CheckIfPhoneLyingDown(val context: Context) : PermissionEvent()
     class CheckIfHasMsg(val context: Context) : PermissionEvent()
+    class CheckIfContactExist(val context: Context) : PermissionEvent()
+    class CheckIfHasCall(val context: Context) : PermissionEvent()
 
 }

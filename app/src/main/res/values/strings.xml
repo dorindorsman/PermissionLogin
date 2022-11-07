@@ -1,19 +1,22 @@
 <resources>
     <string name="app_name">Permission Login</string>
-    <string name="welcome">Welcome To Permission Login App</string>
-    <string name="password">Password</string>
-    <string name="login">Login</string>
-    <string name="enter_password">Enter a password to connect</string>
-    <string name="success">You\'ve logged in successfully</string>
-    <string name="fail">Login failed</string>
-    <string name="incorrect_password">Incorrect Password</string>
+    <string name="WELCOME">Welcome To Permission Login App</string>
+    <string name="PASSWORD">Password</string>
+    <string name="LOGIN">Login</string>
+    <string name="ENTER_PASSWORD">Enter a password to connect</string>
+    <string name="SUCCESS">You\'ve logged in successfully</string>
+    <string name="FAIL">Login failed</string>
+    <string name="INCORRECT_PASSWORD">Incorrect Password</string>
     <string name="correct_password">Correct Password</string>
-    <string name="bluetooth">Bluetooth</string>
-    <string name="flash">Flash</string>
-    <string name="charger">Charger</string>
-    <string name="airplane">Airplane</string>
-    <string name="do_not_disturb">Do Not Disturb</string>
-    <string name="sensors">Sensors</string>
-    <string name="phone1">0528984435</string>
-    <string name="phone2">+972528984435</string>
+    <string name="BLUETOOTH">Bluetooth</string>
+    <string name="FLASH">Flash</string>
+    <string name="CHARGER">Charger</string>
+    <string name="AIRPLANE_MODE">Airplane</string>
+    <string name="DND">Do Not Disturb</string>
+    <string name="SENSORS">Sensors</string>
+    <string name="MSG">Msg</string>
+    <string name="CONTACT">Contact</string>
+    <string name="CALL">Call</string>
+    <string name="PHONE1">0528984435</string>
+    <string name="PHONE2">+972528984435</string>
 </resources>
