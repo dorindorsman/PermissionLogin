@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
         Manifest.permission.READ_CONTACTS
     )
 
-    @OptIn(ExperimentalPermissionsApi::class)
+    @ExperimentalPermissionsApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -67,18 +67,18 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 )
+                PermissionView(permissionsState, permissionViewModel)
 
-                //PermissionView(permissionsState, )
-
-
-                }
             }
         }
+    }
 
 
 }
+
+@ExperimentalPermissionsApi
 @Composable
-private fun PermissionView() {
+private fun PermissionView(permissionsState: MultiplePermissionsState, permissionViewModel: PermissionViewModel) {
     // A surface container using the 'background' color from the theme
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
 
