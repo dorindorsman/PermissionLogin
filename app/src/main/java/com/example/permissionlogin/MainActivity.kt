@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -88,7 +90,11 @@ private fun PermissionView(permissionsState: MultiplePermissionsState, permissio
             verticalArrangement = Arrangement.Center
         ) {
             if (permissionsState.allPermissionsGranted) {
-                LoginScreen(permissionViewModel = permissionViewModel)
+                if(permissionViewModel.loginResult.asString() == UiText.StringResource(R.string.SUCCESS).asString()){
+                    MenuScreen(permissionViewModel = permissionViewModel)
+                }else{
+                    LoginScreen(permissionViewModel = permissionViewModel)
+                }
             } else {
                 permissionsState.permissions.forEach { perm ->
                     when {
@@ -106,8 +112,7 @@ private fun PermissionView(permissionsState: MultiplePermissionsState, permissio
                                 },
                                 text = {
                                     Text(
-                                        text = perm.toString() + " permission is needed" +
-                                                "to access the camera"
+                                        text = "${perm.permission}  permission is needed to make login"
                                     )
                                 },
                                 confirmButton = {
@@ -118,7 +123,7 @@ private fun PermissionView(permissionsState: MultiplePermissionsState, permissio
                             )
                         }
                         perm.isPermanentlyDenied() -> {
-                            PermissionDeniedButton(LocalContext.current, perm)
+                            PermissionDeniedButton(LocalContext.current, perm.permission)
                         }
                     }
                 }
@@ -133,9 +138,9 @@ fun PermissionState.isPermanentlyDenied(): Boolean {
     return !this.status.shouldShowRationale && !this.status.isGranted
 }
 
-@OptIn(ExperimentalPermissionsApi::class)
+
 @Composable
-private fun PermissionDeniedButton(current: Context, permission: PermissionState) {
+private fun PermissionDeniedButton(current: Context, permission: String) {
     Button(
         onClick = {
             startActivity(
@@ -148,7 +153,7 @@ private fun PermissionDeniedButton(current: Context, permission: PermissionState
         }
     ) {
         Text(
-            permission.toString() + " permission was permanently denied. You can enable it in the app settings."
+            "$permission permission was permanently denied. You can enable it in the app settings."
         )
     }
 }
@@ -165,18 +170,6 @@ fun login(context: Context, permissionViewModel: PermissionViewModel) {
     permissionViewModel.handleEvent(PermissionEvent.CheckIfBatteryIsCharging(context))
     permissionViewModel.handleEvent(PermissionEvent.LoginClicked(permissionViewModel.passwordTyped))
 }
-
-@Composable
-fun LoginView(permissionViewModel: PermissionViewModel) {
-
-    if (permissionViewModel.isError) {
-        //todo dialogs for errors
-        //todo permission
-    } else {
-        LoginScreen(permissionViewModel = permissionViewModel)
-    }
-}
-
 
 @Preview(showBackground = true)
 @Composable

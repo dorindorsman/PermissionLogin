@@ -23,13 +23,12 @@ import androidx.core.database.getStringOrNull
 import androidx.lifecycle.ViewModel
 import java.lang.Long
 import java.sql.Date
-import java.time.LocalDateTime
+import java.time.LocalDate
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.String
 import kotlin.arrayOf
 import kotlin.let
-import kotlin.toString
 
 
 class PermissionViewModel : ViewModel() {
@@ -42,8 +41,6 @@ class PermissionViewModel : ViewModel() {
     private var isDndOn by mutableStateOf(false)
     private var isBluetoothOn by mutableStateOf(false)
     private var isLyingDown by mutableStateOf(false)
-    private var hasSms by mutableStateOf(false)
-    private var hasMms by mutableStateOf(false)
     private var hasMsg by mutableStateOf(false)
     private var hasCall by mutableStateOf(false)
     private var contactExist by mutableStateOf(false)
@@ -124,14 +121,14 @@ class PermissionViewModel : ViewModel() {
         if (!contactExist) {
             loginResult = UiText.StringResource(R.string.CONTACT)
             isError = true
-            Log.d("dorin", "hasMsg")
+            Log.d("dorin", "contactExist")
             return
         }
 
         if (!hasCall) {
             loginResult = UiText.StringResource(R.string.CALL)
             isError = true
-            Log.d("dorin", "hasMsg")
+            Log.d("dorin", "hasCall")
             return
         }
 
@@ -210,67 +207,78 @@ class PermissionViewModel : ViewModel() {
     }
 
     private fun handleCheckIfHasMsg(context: Context) {
-        checkIfHasMsg(context)
-        if (hasMms || hasSms) {
+        if (checkIfHasMsg(context)) {
             hasMsg = true
             return
         }
         hasMsg = false
     }
 
-    private fun checkIfHasMsg(context: Context) {
+    private fun checkIfHasMsg(context: Context): Boolean {
         val smsCursor = context.contentResolver.query(Telephony.Sms.CONTENT_URI, null, null, null, Telephony.Sms.DEFAULT_SORT_ORDER)
         smsCursor?.let {
             if (it.moveToFirst()) {
                 do {
-                    if (it.getString(it.getColumnIndexOrThrow(Telephony.Sms.ADDRESS))
-                            .equals(UiText.StringResource(R.string.PHONE1)) || it.getString(it.getColumnIndexOrThrow(Telephony.Sms.ADDRESS))
-                            .equals(UiText.StringResource(R.string.PHONE2))
+                    if (it.getStringOrNull(it.getColumnIndexOrThrow(Telephony.Sms.ADDRESS))
+                            .equals(UiText.StringResource(R.string.PHONE1).asString(context)) ||
+                        it.getStringOrNull(it.getColumnIndexOrThrow(Telephony.Sms.ADDRESS))
+                            .equals(UiText.StringResource(R.string.PHONE2).asString(context))
                     ) {
-                        hasSms = true
-                        return
+                        return true
                     }
                 } while (it.moveToNext())
             }
             it.close()
-            hasSms = false
         }
 
         val mmsCursor = context.contentResolver.query(Telephony.Mms.CONTENT_URI, null, null, null, Telephony.Sms.DEFAULT_SORT_ORDER)
         mmsCursor?.let {
             if (it.moveToFirst()) {
                 do {
-                    it.getStringOrNull(it.getColumnIndexOrThrow(Telephony.Mms.CREATOR)).toString()
-                    if (it.getStringOrNull(it.getColumnIndexOrThrow(Telephony.Mms.CREATOR)).toString()
-                            .equals(UiText.StringResource(R.string.PHONE1)) || it.getStringOrNull(it.getColumnIndexOrThrow(Telephony.Mms.CREATOR))
-                            .toString().equals(UiText.StringResource(R.string.PHONE2))
+                    if (it.getStringOrNull(it.getColumnIndexOrThrow(Telephony.Mms.CREATOR)).equals(
+                            UiText.StringResource(R.string.PHONE1)
+                                .asString(context)
+                        ) || it.getStringOrNull(it.getColumnIndexOrThrow(Telephony.Mms.CREATOR)).equals(
+                            UiText.StringResource(R.string.PHONE2).asString(context)
+                        )
                     ) {
-                        hasMms = true
-                        return
+                        return true
                     }
                 } while (it.moveToNext())
             }
             it.close()
-            hasMms = false
         }
+        return false
     }
 
 
     private fun handleCheckIfContactExist(context: Context) {
-        val lookupUri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(R.string.PHONE1.toString()))
+        val lookupUri1 =
+            Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(UiText.StringResource(R.string.PHONE1).asString(context)))
+        val lookupUri2 =
+            Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(UiText.StringResource(R.string.PHONE2).asString(context)))
         val phoneNumberProjection = arrayOf(PhoneLookup._ID, PhoneLookup.NUMBER, PhoneLookup.DISPLAY_NAME)
-        val cursor = context.contentResolver.query(lookupUri, phoneNumberProjection, null, null, null);
-        cursor?.let {
-            try {
-                if (cursor.moveToFirst()) {
+
+        val cursor1 = context.contentResolver.query(lookupUri1, phoneNumberProjection, null, null, null);
+        cursor1?.let {
+            cursor1.use { cursor1 ->
+                if (cursor1.moveToFirst()) {
                     contactExist = true
+                    return
                 }
-            } finally {
-                if (cursor != null)
-                    cursor.close()
             }
-            contactExist = false
         }
+
+        val cursor2 = context.contentResolver.query(lookupUri2, phoneNumberProjection, null, null, null);
+        cursor2?.let {
+            cursor2.use { cursor2 ->
+                if (cursor2.moveToFirst()) {
+                    contactExist = true
+                    return
+                }
+            }
+        }
+        contactExist = false
     }
 
 
@@ -281,27 +289,29 @@ class PermissionViewModel : ViewModel() {
                 while (cursor.moveToNext()) {
                     val callDate: String = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.DATE))
                     val phoneNumber: String = cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.NUMBER))
-                    val dateFormat = Date(Long.valueOf(callDate))
-                    val current = LocalDateTime.now().toString()
-                    val currentDateFormat = Date(Long.valueOf(current))
+                    val callDateFormat = Date(Long.valueOf(callDate))
+                    val currentDateFormat = LocalDate.now().toString()
                     var direction: String? = null
                     when (cursor.getString(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE)).toInt()) {
-                        Telephony.Sms.MESSAGE_TYPE_INBOX -> direction = "OUTGOING"
-                        Telephony.Sms.MESSAGE_TYPE_SENT -> direction = "INGOING"
-                        Telephony.Sms.MESSAGE_TYPE_OUTBOX -> direction = "MISSED"
-                        else -> {}
+                        CallLog.Calls.INCOMING_TYPE -> direction = "INGOING"
+                        CallLog.Calls.OUTGOING_TYPE -> direction = "OUTGOING"
+                        CallLog.Calls.MISSED_TYPE -> direction = "MISSED"
                     }
-                    if (phoneNumber.equals(UiText.StringResource(R.string.PHONE1)) || phoneNumber.equals(UiText.StringResource(R.string.PHONE2))) {
-                        if (direction.equals("INGOING") && currentDateFormat == dateFormat) {
+                    if (phoneNumber.equals(
+                            UiText.StringResource(R.string.PHONE1).asString(context)
+                        ) || phoneNumber.equals(UiText.StringResource(R.string.PHONE2).asString(context))
+                    ) {
+                        if (direction.equals("INGOING") && currentDateFormat.equals(callDateFormat.toString())) {
                             hasCall = true
+                            return
                         }
-                    } else {
-                        hasCall = false
                     }
                 }
             }
             cursor.close()
         }
+
+        hasCall = false
     }
 
 }
